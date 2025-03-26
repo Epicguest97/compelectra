@@ -9,7 +9,214 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      bids: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          delivery_time: string
+          description: string
+          id: string
+          seller_id: string
+          status: string
+          tender_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          delivery_time: string
+          description: string
+          id?: string
+          seller_id: string
+          status: string
+          tender_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          delivery_time?: string
+          description?: string
+          id?: string
+          seller_id?: string
+          status?: string
+          tender_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bids_tender_id_fkey"
+            columns: ["tender_id"]
+            isOneToOne: false
+            referencedRelation: "tenders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_profiles: {
+        Row: {
+          address: string | null
+          created_at: string
+          description: string | null
+          id: string
+          industry: string | null
+          logo: string | null
+          name: string
+          phone_number: string | null
+          updated_at: string
+          user_id: string
+          verification_status: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          industry?: string | null
+          logo?: string | null
+          name: string
+          phone_number?: string | null
+          updated_at?: string
+          user_id: string
+          verification_status: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          industry?: string | null
+          logo?: string | null
+          name?: string
+          phone_number?: string | null
+          updated_at?: string
+          user_id?: string
+          verification_status?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          company_name: string | null
+          created_at: string
+          first_name: string | null
+          id: string
+          last_name: string | null
+          profile_complete: boolean | null
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          company_name?: string | null
+          created_at?: string
+          first_name?: string | null
+          id: string
+          last_name?: string | null
+          profile_complete?: boolean | null
+          role: string
+          updated_at?: string
+        }
+        Update: {
+          company_name?: string | null
+          created_at?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          profile_complete?: boolean | null
+          role?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tender_invitations: {
+        Row: {
+          created_at: string
+          id: string
+          seller_id: string
+          status: string
+          tender_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          seller_id: string
+          status: string
+          tender_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          seller_id?: string
+          status?: string
+          tender_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tender_invitations_tender_id_fkey"
+            columns: ["tender_id"]
+            isOneToOne: false
+            referencedRelation: "tenders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenders: {
+        Row: {
+          budget: number
+          category: string
+          created_at: string
+          created_by: string
+          currency: string
+          deadline: string
+          description: string
+          id: string
+          requirements: Json | null
+          status: string
+          title: string
+          updated_at: string
+          visibility: string
+        }
+        Insert: {
+          budget: number
+          category: string
+          created_at?: string
+          created_by: string
+          currency?: string
+          deadline: string
+          description: string
+          id?: string
+          requirements?: Json | null
+          status: string
+          title: string
+          updated_at?: string
+          visibility: string
+        }
+        Update: {
+          budget?: number
+          category?: string
+          created_at?: string
+          created_by?: string
+          currency?: string
+          deadline?: string
+          description?: string
+          id?: string
+          requirements?: Json | null
+          status?: string
+          title?: string
+          updated_at?: string
+          visibility?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

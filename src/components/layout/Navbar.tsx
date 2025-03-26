@@ -1,14 +1,38 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, ChevronDown } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Menu, X, ChevronDown, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  // Check auth status
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      setIsLoggedIn(!!data.session);
+    };
+
+    checkAuth();
+
+    // Listen for auth changes
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsLoggedIn(!!session);
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -24,7 +48,23 @@ const Navbar = () => {
     setMobileMenuOpen(false);
   }, [location.pathname]);
 
-  const isLoggedIn = false; // To be replaced with auth state
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast({
+        title: "Logged out successfully",
+        description: "You have been logged out from your account.",
+        variant: "default",
+      });
+      navigate('/');
+    } catch (error: any) {
+      toast({
+        title: "Logout failed",
+        description: error.message || "Something went wrong.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <nav 
@@ -75,9 +115,19 @@ const Navbar = () => {
           {/* Auth Buttons */}
           <div className="hidden md:flex md:items-center md:space-x-4">
             {isLoggedIn ? (
-              <Link to="/dashboard">
-                <Button variant="default" size="sm">Dashboard</Button>
-              </Link>
+              <div className="flex items-center space-x-4">
+                <Link to="/dashboard">
+                  <Button variant="default" size="sm">Dashboard</Button>
+                </Link>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </Button>
+              </div>
             ) : (
               <>
                 <Link to="/login">
@@ -133,9 +183,19 @@ const Navbar = () => {
               </Link>
               <div className="pt-2 flex flex-col space-y-2">
                 {isLoggedIn ? (
-                  <Link to="/dashboard">
-                    <Button className="w-full" variant="default">Dashboard</Button>
-                  </Link>
+                  <>
+                    <Link to="/dashboard">
+                      <Button className="w-full" variant="default">Dashboard</Button>
+                    </Link>
+                    <Button
+                      className="w-full"
+                      variant="outline"
+                      onClick={handleLogout}
+                    >
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Logout
+                    </Button>
+                  </>
                 ) : (
                   <>
                     <Link to="/login">

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { EyeIcon, EyeOffIcon, CheckCircle } from 'lucide-react';
 import { UserRole } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -21,6 +22,18 @@ const Register = () => {
     password: '',
     userRole: 'buyer' as UserRole,
   });
+
+  // Check if user is already logged in
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        navigate('/dashboard');
+      }
+    };
+    
+    checkSession();
+  }, [navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -36,25 +49,87 @@ const Register = () => {
     setIsLoading(true);
 
     try {
-      // Here we would connect to Supabase for authentication
-      toast({
-        title: "Please connect Supabase",
-        description: "User registration requires a Supabase connection to proceed.",
-        variant: "default",
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            role: formData.userRole,
+          },
+          redirectTo: `${window.location.origin}/dashboard`,
+        },
       });
-      
-      // For the demo, we'll simulate a successful registration after a delay
-      setTimeout(() => {
-        setIsLoading(false);
+
+      if (error) {
+        throw error;
+      }
+
+      if (data.user) {
+        toast({
+          title: "Registration successful",
+          description: "Welcome to TenderLink! Please verify your email to continue.",
+          variant: "default",
+        });
         navigate('/dashboard');
-      }, 1500);
-    } catch (error) {
+      }
+    } catch (error: any) {
       setIsLoading(false);
       toast({
         title: "Registration failed",
-        description: "Please check your input and try again.",
+        description: error.message || "Please check your input and try again.",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleGoogleSignUp = async () => {
+    try {
+      setIsLoading(true);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+          queryParams: {
+            // Pass the selected role as a query parameter
+            // This will be available in the raw_user_meta_data
+            role: formData.userRole,
+          },
+        },
+      });
+
+      if (error) throw error;
+    } catch (error: any) {
+      toast({
+        title: "Registration failed",
+        description: error.message || "Could not sign up with Google.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+    }
+  };
+
+  const handleMicrosoftSignUp = async () => {
+    try {
+      setIsLoading(true);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'azure',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+          queryParams: {
+            // Pass the selected role as a query parameter
+            role: formData.userRole,
+          },
+        },
+      });
+
+      if (error) throw error;
+    } catch (error: any) {
+      toast({
+        title: "Registration failed",
+        description: error.message || "Could not sign up with Microsoft.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
     }
   };
 
@@ -222,12 +297,14 @@ const Register = () => {
                   <div className="mt-6 grid grid-cols-2 gap-3">
                     <button
                       type="button"
+                      onClick={handleGoogleSignUp}
                       className="btn-ghost flex justify-center items-center border border-border"
                     >
                       <span>Google</span>
                     </button>
                     <button
                       type="button"
+                      onClick={handleMicrosoftSignUp}
                       className="btn-ghost flex justify-center items-center border border-border"
                     >
                       <span>Microsoft</span>

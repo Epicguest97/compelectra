@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { EyeIcon, EyeOffIcon } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -19,6 +20,18 @@ const Login = () => {
     password: '',
   });
 
+  // Check if user is already logged in
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        navigate('/dashboard');
+      }
+    };
+    
+    checkSession();
+  }, [navigate]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -29,25 +42,72 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      // Here we would connect to Supabase for authentication
-      toast({
-        title: "Please connect Supabase",
-        description: "Authentication requires a Supabase connection to proceed.",
-        variant: "default",
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
       });
-      
-      // For the demo, we'll simulate a successful login after a delay
-      setTimeout(() => {
-        setIsLoading(false);
+
+      if (error) {
+        throw error;
+      }
+
+      if (data.user) {
+        toast({
+          title: "Login successful",
+          description: "Welcome back to TenderLink!",
+          variant: "default",
+        });
         navigate('/dashboard');
-      }, 1500);
-    } catch (error) {
+      }
+    } catch (error: any) {
       setIsLoading(false);
       toast({
         title: "Login failed",
-        description: "Please check your credentials and try again.",
+        description: error.message || "Please check your credentials and try again.",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setIsLoading(true);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+        },
+      });
+
+      if (error) throw error;
+    } catch (error: any) {
+      toast({
+        title: "Login failed",
+        description: error.message || "Could not sign in with Google.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+    }
+  };
+
+  const handleMicrosoftSignIn = async () => {
+    try {
+      setIsLoading(true);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'azure',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+        },
+      });
+
+      if (error) throw error;
+    } catch (error: any) {
+      toast({
+        title: "Login failed",
+        description: error.message || "Could not sign in with Microsoft.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
     }
   };
 
@@ -146,12 +206,14 @@ const Login = () => {
               <div className="mt-6 grid grid-cols-2 gap-3">
                 <button
                   type="button"
+                  onClick={handleGoogleSignIn}
                   className="btn-ghost flex justify-center items-center border border-border"
                 >
                   <span>Google</span>
                 </button>
                 <button
                   type="button"
+                  onClick={handleMicrosoftSignIn}
                   className="btn-ghost flex justify-center items-center border border-border"
                 >
                   <span>Microsoft</span>
