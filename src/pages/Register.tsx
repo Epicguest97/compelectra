@@ -56,7 +56,7 @@ const Register = () => {
           data: {
             role: formData.userRole,
           },
-          redirectTo: `${window.location.origin}/dashboard`,
+          emailRedirectTo: `${window.location.origin}/dashboard`,
         },
       });
 
